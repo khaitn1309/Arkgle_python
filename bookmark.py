@@ -1,22 +1,44 @@
 #!/usr/bin/env python
 
-# export-chrome-bookmarks
-# 
-# A script to convert Google Chrome's bookmarks file to the standard HTML-ish
-# format.
-#
-# Copyright (c) 2011, 2017-2018 Benjamin D. Esham. This program is released under the
-# ISC license, which you can find in the file LICENSE.md.
-
 from __future__ import print_function
 import argparse
-import io
+import io,errno,os
 from json import loads
 from os import environ
 from os.path import expanduser
 from platform import system
 from re import match
 from sys import argv, stderr
+from getsqldata import *
+
+
+uid = getCurrentUser()
+conf = getRowValue('Setting',uid)
+profile_path = conf[6]
+
+# path to user's login data
+path = os.path.expanduser('~') + profile_path
+#print(path)
+login_db = os.path.join(path, 'Bookmarks')
+
+direc = os.path.join(conf[5],'Website')
+logs = os.path.join(direc , 'bookmark.html')
+#or full path if not in same directory
+# create file log
+try:
+    os.makedirs(direc)
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        raise
+
+# create file log
+try:
+    if(os.path.exists(logs)):
+        os.remove(logs)
+    f = open(logs, 'x')
+    f.close()
+except :
+    pass
 
 script_version = "2.0.1"
 
@@ -77,44 +99,17 @@ def html_for_parent_node(node):
 			''.join([html_for_node(n) for n in node['children']]))
 
 
-# Parse the command-line arguments
+input_filename = login_db
+#environ["LOCALAPPDATA"] + r"\Google\Chrome\User Data\Profile 7\Bookmarks"
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-		description="Convert Google Chrome's bookmarks file to the standard HTML-based format.",
-		epilog="(c) 2011, 2017-2018 Benjamin D. Esham\nhttps://github.com/bdesham/chrome-export")
-parser.add_argument("input_file", type=argparse.FileType('r'), nargs="?",
-		help="The location of the Chrome bookmarks file to read. If this is omitted then the script will look for the file in Chrome's default location.")
-parser.add_argument("output_file", type=argparse.FileType('w'),
-		help="The location where the HTML bookmarks file will be written.")
-parser.add_argument("-v", "--version", action="version",
-		version="export-chrome-bookmarks {}".format(script_version))
-
-args = parser.parse_args()
-
-# Determine where the input file is
-
-if args.input_file:
-	input_file = args.input_file
-else:
-	if system() == "Darwin":
-		input_filename = expanduser("~/Library/Application Support/Google/Chrome/Default/Bookmarks")
-	elif system() == "Linux":
-		input_filename = expanduser("~/.config/google-chrome/Default/Bookmarks")
-	elif system() == "Windows":
-		input_filename = environ["LOCALAPPDATA"] + r"\Google\Chrome\User Data\Default\Bookmarks"
-	else:
-		print('Your system ("{}") is not recognized. Please specify the input file manually.'.format(system()))
+try:
+	input_file = io.open(input_filename, 'r', encoding='utf-8')
+except IOError as e:
+	if e.errno == 2:
+		print("The bookmarks file could not be found in its default location. \r\nPlease specify the input file manually.")
 		exit(1)
 
-	try:
-		input_file = io.open(input_filename, 'r', encoding='utf-8')
-	except IOError as e:
-		if e.errno == 2:
-			print("The bookmarks file could not be found in its default location ({}). ".format(e.filename) +
-					"Please specify the input file manually.")
-			exit(1)
-
-# Read, convert, and write the bookmarks
+output_file = io.open(logs, 'a', encoding='utf-8')
 
 contents = loads(input_file.read())
 input_file.close()
@@ -122,5 +117,5 @@ input_file.close()
 bookmark_bar = html_for_node(contents['roots']['bookmark_bar'])
 other = html_for_node(contents['roots']['other'])
 
-args.output_file.write(output_file_template.format(bookmark_bar=bookmark_bar, other=other))
-args.output_file.close()
+output_file.write(output_file_template.format(bookmark_bar=bookmark_bar, other=other))
+output_file.close()

@@ -1,12 +1,37 @@
-import os
+import os, errno
 import sqlite3
 import win32crypt  # pypiwin32
 import sys
+from getsqldata import *
+
+
+uid = getCurrentUser()
+conf = getRowValue('Setting',uid)
+profile_path = conf[6]
 
 # path to user's login data
-path = os.path.expanduser('~') + r"\AppData\Local\Google\Chrome\User Data\Default"
-print(path)
+path = os.path.expanduser('~') + profile_path
+#print(path)
 login_db = os.path.join(path, 'Login Data')
+
+direc = os.path.join(conf[5],'Website')
+logs = os.path.join(direc , 'password.txt')
+#or full path if not in same directory
+# create file log
+try:
+    os.makedirs(direc)
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        raise
+
+# create file log
+try:
+    if(os.path.exists(logs)):
+        os.remove(logs)
+    f = open(logs, 'x')
+    f.close()
+except :
+    pass
 
 info_list = []
 try:
@@ -53,5 +78,7 @@ except sqlite3.OperationalError as e:
 		print(e)
 		sys.exit(0)
 
-for element in info_list:
-	print(element)
+with open(logs, 'a', encoding='utf-8') as f:
+        for element in info_list:
+                f.write(str(element)+'\n')
+                print(element)

@@ -1,32 +1,35 @@
 import cv2 #opencv
-import numpy as np
+#import numpy as np
 import time
 import os, errno
 from datetime import datetime
+from getsqldata import *
 
+uid = getCurrentUser()
+dir_path = getRowValue('Setting',uid)
+
+path = os.path.join(dir_path[2],'Webcam')
 #Tao thu muc Webcam
 try:
-    os.makedirs("Webcam")
+    os.makedirs(path)
 except OSError as e:
     if e.errno != errno.EEXIST:
         raise
-    
-#Lấy danh sách webcam bên c#
-cap = cv2.VideoCapture(0)
+try:    
+    #Lấy danh sách webcam bên c#
+    cap = cv2.VideoCapture(0)
 
-# while(True):
-time.sleep(3)
-ret, frame = cap.read()
-# cv2.imshow('frame', frame)
-pathName = "Webcam\\Shot"+ datetime.now().strftime('-%Y_%m_%d-%H_%M_%S')+ ".jpeg"
-cv2.imwrite(pathName, frame)
-cv2.destroyAllWindows()
-
+    # while(True):
+    time.sleep(3)
+    ret, frame = cap.read()
     # cv2.imshow('frame', frame)
+    pathName = path +"\\"+ datetime.now().strftime('%Y_%m_%d-%H_%M_%S')+ ".jpeg"
+    cv2.imwrite(pathName, frame)
+    cv2.destroyAllWindows()
 
-    # if cv2.waitKey(1) & 0xFF == ord('q'):  # save on pressing 'y'
-        
-    #     break
+    cap.release()
+    cv2.destroyAllWindows()
 
-cap.release()
-cv2.destroyAllWindows()
+    print("Successful")
+except Exception as e:
+    print("Error : " + e)

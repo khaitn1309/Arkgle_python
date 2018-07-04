@@ -1,7 +1,7 @@
 import webbrowser
 import os
 
-webbrowser.open('http://www.google.com.vn', new=2)
+webbrowser.open('https://daa.uit.edu.vn/', new=2)
 
 import errno, os, winreg
 proc_arch = os.environ['PROCESSOR_ARCHITECTURE'].lower()

