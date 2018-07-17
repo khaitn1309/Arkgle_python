@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 import argparse
-import io,errno,os
+import io,errno,os,sys
 from json import loads
 from os import environ
 from os.path import expanduser
@@ -10,19 +10,30 @@ from platform import system
 from re import match
 from sys import argv, stderr
 from getsqldata import *
-
+from datetime import datetime
 
 uid = getCurrentUser()
 conf = getRowValue('Setting',uid)
 profile_path = conf[6]
 
 # path to user's login data
-path = os.path.expanduser('~') + profile_path
-#print(path)
-login_db = os.path.join(path, 'Bookmarks')
+user = os.path.expanduser('~')# + profile_path
 
+login_db = ''
+if(profile_path.find(user) == -1):
+    path = user + profile_path
+    login_db = os.path.join(path, 'Bookmarks')
+else:
+    login_db = os.path.join(profile_path, 'Bookmarks')
+    
 direc = os.path.join(conf[5],'Website')
-logs = os.path.join(direc , 'bookmark.html')
+
+token = getRowValue('current_user',uid)[1]
+time = datetime.now().strftime('%Y_%m_%d')
+email = getRowValue('Users',uid)[1]
+name = time + '-' + email+ '-' + 'bookmark-' + token + '.html'
+
+logs = os.path.join(direc , name)
 #or full path if not in same directory
 # create file log
 try:
@@ -100,14 +111,13 @@ def html_for_parent_node(node):
 
 
 input_filename = login_db
-#environ["LOCALAPPDATA"] + r"\Google\Chrome\User Data\Profile 7\Bookmarks"
 
-try:
-	input_file = io.open(input_filename, 'r', encoding='utf-8')
-except IOError as e:
-	if e.errno == 2:
-		print("The bookmarks file could not be found in its default location. \r\nPlease specify the input file manually.")
-		exit(1)
+if(os.path.exists(input_filename)):
+    print(input_filename)
+else:
+    print("file not found in current location!")
+    sys.exit(0)
+input_file = io.open(input_filename, 'r', encoding='utf-8')
 
 output_file = io.open(logs, 'a', encoding='utf-8')
 

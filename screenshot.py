@@ -6,6 +6,7 @@ from getsqldata import *
 
 
 uid = getCurrentUser()
+email = getRowValue('Users',uid)[1]
 dir_path = getRowValue('Setting',uid)
 path = os.path.join(dir_path[3],'Screenshot')
 
@@ -19,7 +20,8 @@ except OSError as e:
         raise
 
 with mss() as sct:
-    pathName = path +'\\'+ datetime.now().strftime('%Y_%m_%d-%H_%M_%S')+ '.jpeg'
+    pathName = path +'\\'+ datetime.now().strftime('%Y_%m_%d-%H_%M_%S-')+email+ '.jpeg'
+    print(pathName)
     for filename in sct.save():
         sct.shot()
         # print(filename)

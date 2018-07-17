@@ -5,14 +5,18 @@ import  errno
 from collections import OrderedDict
 import matplotlib.pyplot as plt
 from getsqldata import *
-
+from datetime import datetime
 
 uid = getCurrentUser()
 conf = getRowValue('Setting',uid)
 profile_path = conf[6]
 
 direc = os.path.join(conf[5],'Website')
-logs = os.path.join(direc , 'webUsage.txt') #or full path if not in same directory
+token = getRowValue('current_user',uid)[1]
+time = datetime.now().strftime('%Y_%m_%d')
+email = getRowValue('Users',uid)[1]
+name = time + '-' + email+ '-' + 'history-' + token + '.txt'
+logs = os.path.join(direc , name) #or full path if not in same directory
 # create file log
 try:
     os.makedirs(direc)
@@ -40,28 +44,26 @@ def parse(url):
 
 def analyze(results):
 
-    prompt = input("[.] Type <c> to print or <p> to plot\n[>] ")
-
-    if prompt == "c":
-        with open(logs, 'a', encoding='utf-8') as f:
-            for site, count in sites_count_sorted.items():
-                line = str(site) +'\t'+ str(count)+ '\n'
-                f.write(line)
-                #print (line)
-    elif prompt == "p":
-        plt.bar(range(len(results)), results.values(), align='edge')
-        plt.xticks(rotation=45)
-        plt.xticks(range(len(results)), results.keys())
-        plt.show()
-    else:
-        print ("[.] Uh?")
-        quit()
+   
+    with open(logs, 'a', encoding='utf-8') as f:
+        for site, count in sites_count_sorted.items():
+            line = str(site) +'\t'+ str(count)+ '\n'
+            f.write(line)
+            #print (line)
+  
 
 #path to user's history database (Chrome)
-data_path = os.path.expanduser('~') + profile_path
-files = os.listdir(data_path)
+user = os.path.expanduser('~')# + profile_path
 
-history_db = os.path.join(data_path, 'history')
+## has not user in profile path
+history_db = ''
+if(profile_path.find(user) == -1):
+    path = user + profile_path
+    history_db = os.path.join(path, 'history')
+else:
+    history_db = os.path.join(profile_path, 'history')
+
+print(history_db)
 
 try:
         #querying the db
